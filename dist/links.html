@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>static.me</title>
+  <style>
+    /* 1. Define color variables */
+    :root {
+      --bg-color: #fafafa;
+      --text-color: #111111;
+      --heading-color: #2c3e50;
+      --code-bg-color: #f0f0f0;
+      --icon-fill: #111111;
+      --search-bg: #F3F3F3;
+      --search-focus-border: #4A9DEC;
+      --search-focus-shadow: rgb(74 157 236 / 20%);
+      --menu-bg: #f0f0f0;
+      --menu-hover-bg: #e4e4e4;
+      --menu-text-color: #111;
+      --menu-icon-color: #555;
+      /* Card specific colors */
+      --card-bg: var(--bg-color);
+      --card-border: #dcdcdc;
+      --card-shadow: rgba(0, 0, 0, 0.05);
+      --card-title-color: #111;
+      --card-desc-color: #333;
+      --card-tag-bg: #e0e0e0;
+      --card-tag-text: #222;
+      --card-editor-bg: #0d1117;
+      --card-editor-text: #dcdcdc;
+      --card-editor-border: #dcdcdc;
+      /* Global texture */
+      --texture-color: rgba(0, 0, 0, 0.03);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1b1c1d;
+      --text-color: #ffffff;
+      --heading-color: #e0e0e0;
+      --code-bg-color: #333333;
+      --icon-fill: #ffffff;
+      --search-bg: #21262c;
+      --menu-bg: #0d1117;
+      --menu-hover-bg: #21262c;
+      --menu-text-color: #fff;
+      --menu-icon-color: #7D8590;
+      /* Card specific colors */
+      --card-bg: #000;
+      --card-border: #333;
+      --card-shadow: rgba(0, 0, 0, 0.2);
+      --card-title-color: #e6e6ef;
+      --card-desc-color: #888;
+      --card-tag-bg: #0d1117;
+      --card-tag-text: #dcdcdc;
+      --card-editor-bg: #0d1117;
+      --card-editor-text: #dcdcdc;
+      --card-editor-border: #333;
+      /* Global texture */
+      --texture-color: rgba(255, 255, 255, 0.03);
+    }
+
+    /* 2. General Body & Sticky Footer Styles */
+    html, body { height: 100%; margin: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      transition: background-color 0.3s, color 0.3s;
+      display: flex;
+      flex-direction: column;
+      /* NEW: Global background texture */
+      background-image: 
+        radial-gradient(circle at 50% 50%, var(--texture-color) 1px, transparent 0),
+        linear-gradient(var(--texture-color) 1px, transparent 0),
+        linear-gradient(90deg, var(--texture-color) 1px, transparent 0);
+      background-size: 40px 40px, 20px 20px, 20px 20px;
+    }
+
+    .page-wrapper {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      transition: filter 0.5s ease-out;
+      flex: 1 0 auto;
+    }
+    
+    footer {
+      flex-shrink: 0;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1rem;
+      text-align: center;
+    }
+    
+    #menu-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      opacity: 0;
+      transition: opacity 0.5s ease-out;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* --- Slide-out Menu Active State --- */
+    body.menu-open .page-wrapper, body.menu-open footer {
+      filter: blur(3px);
+      pointer-events: none;
+    }
+    body.menu-open #menu-overlay { opacity: 1; pointer-events: auto; }
+    body.menu-open .slide-out-menu { transform: translateX(0); }
+
+    h1, h2, h3 { color: var(--heading-color); }
+    code { background-color: var(--code-bg-color); padding: 2px 4px; border-radius: 3px; }
+    hr { border: none; border-top: 1px solid var(--text-color); opacity: 0.3; }
+
+    /* --- Header Layout --- */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .header-left, .header-right-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8em;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+    .title-link {
+      text-decoration: none;
+      color: inherit;
+      transition: opacity 0.2s;
+    }
+    .title-link:hover {
+      opacity: 0.8;
+    }
+
+    /* --- Hamburger Menu Icon --- */
+    .hamburger { cursor: pointer; display: flex; align-items: center; justify-content: center; height: 2.2em; width: 2.2em; }
+    .hamburger input { display: none; }
+    .hamburger svg { height: 1.8em; transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .line { fill: none; stroke: var(--icon-fill); stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; transition: stroke-dasharray 600ms cubic-bezier(0.4, 0, 0.2, 1), stroke-dashoffset 600ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .line-top-bottom { stroke-dasharray: 12 63; }
+    .hamburger input:checked + svg { transform: rotate(-45deg); }
+    .hamburger input:checked + svg .line-top-bottom { stroke-dasharray: 20 300; stroke-dashoffset: -32.42; }
+
+    /* --- Search Bar CSS --- */
+    .input {
+      border: 2px solid transparent;
+      width: 15em;
+      height: 2.2em;
+      padding-left: 0.8em;
+      outline: none;
+      overflow: hidden;
+      background-color: var(--search-bg);
+      color: var(--text-color);
+      border-radius: 10px;
+      transition: all 0.5s;
+      font-size: 1em;
+    }
+    .input:hover, .input:focus {
+      border: 2px solid var(--search-focus-border);
+      box-shadow: 0px 0px 0px 7px var(--search-focus-shadow);
+      background-color: var(--bg-color);
+    }
+    .input::placeholder {
+      color: var(--text-color);
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    
+    /* --- Theme Toggle CSS --- */
+    .themeToggle { color: var(--icon-fill); width: 1.5em; height: 1.5em; }
+    .st-sunMoonThemeToggleBtn { position: relative; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 2.2em; height: 2.2em; }
+    .st-sunMoonThemeToggleBtn .themeToggleInput { opacity: 0; position: absolute; width: 100%; height: 100%; }
+    .st-sunMoonThemeToggleBtn svg { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(40deg); width: 1.5em; height: 1.5em; transition: transform 0.4s ease; }
+    .st-sunMoonThemeToggleBtn svg .sunMoon { transform-origin: center center; transition: inherit; transform: scale(1); }
+    .st-sunMoonThemeToggleBtn svg .sunRay { transform-origin: center center; transform: scale(0); }
+    .st-sunMoonThemeToggleBtn svg mask > circle { transition: transform 0.64s cubic-bezier(0.41, 0.64, 0.32, 1.575); transform: translate(0px, 0px); }
+    .st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg { transform: translate(-50%, -50%) rotate(90deg); }
+    .st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg mask > circle { transform: translate(16px, -3px); }
+    .st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg .sunMoon { transform: scale(0.55); }
+    .st-sunMoonThemeToggleBtn .themeToggleInput:checked + svg .sunRay { animation: showRay1832 0.4s ease 0s 1 forwards; }
+    @keyframes showRay1832 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+    /* --- Slide-Out Menu CSS --- */
+    .slide-out-menu {
+      position: fixed; top: 0; left: 0;
+      width: calc((100vw - 800px) / 2);
+      min-width: 280px;
+      max-width: 400px;
+      height: 100vh;
+      background-color: var(--menu-bg);
+      list-style: none;
+      transform: translateX(-100%);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+      box-shadow: 5px 0px 25px rgba(0,0,0,0.2);
+      display: flex; flex-direction: column;
+      padding: 0; margin: 0;
+    }
+    .menu-header { display: flex; justify-content: flex-end; padding: 1rem 1rem 0 1rem; flex-shrink: 0; }
+    .menu-items-list { padding: 0 1rem; list-style: none; }
+    .menu-search-container { padding: 1.5rem 1rem; }
+    .menu-search-container .input { width: 100%; box-sizing: border-box; }
+    .close-button { background: transparent; border: none; cursor: pointer; padding: 0.5rem; }
+    .close-button svg { width: 12px; height: 12px; stroke: var(--menu-icon-color); stroke-width: 3; stroke-linecap: round; }
+    .menu-item-link { text-decoration: none; }
+    .menu-item {
+      background-color: transparent; border: none;
+      padding: 10px; color: var(--menu-text-color);
+      display: flex; position: relative;
+      gap: 10px; cursor: pointer;
+      border-radius: 4px;
+      width: 100%;
+      font-size: 1rem;
+      align-items: center;
+      margin-bottom: 5px;
+      transform-origin: left center;
+      transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), margin-bottom 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .menu-item:not(:active):hover, .menu-item:focus {
+      background-color: var(--menu-hover-bg);
+      outline: none;
+      transform: scale(1.05);
+      margin-bottom: 10px;
+    }
+    .menu-item svg { width: 20px; height: 20px; stroke: var(--menu-icon-color); fill: none; stroke-width: 1.5; flex-shrink: 0; }
+    
+    /* --- Project Card Styles --- */
+    .projects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+    .card-link { text-decoration: none; }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      background-color: var(--card-bg);
+      box-shadow: 0 4px 8px var(--card-shadow);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 6px 12px var(--card-shadow);
+    }
+    .mac-header { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+    .mac-header span { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+    .mac-header .red { background-color: #ff5f57; }
+    .mac-header .yellow { background-color: #ffbd2e; }
+    .mac-header .green { background-color: #28c941; }
+    .card-title { font-size: 18px; font-weight: bold; margin: 0 0 10px; color: var(--card-title-color); }
+    .card-description { font-size: 14px; color: var(--card-desc-color); margin-bottom: 15px; }
+    .card-tags { margin-bottom: 15px; }
+    .card .card-tag { display: inline-block; font-size: 10px; border-radius: 5px; background-color: var(--card-tag-bg); padding: 4px 8px; margin-right: 5px; margin-bottom: 5px; color: var(--card-tag-text); }
+    .code-editor {
+      background-color: var(--card-editor-bg);
+      color: var(--card-editor-text);
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      border-radius: 5px;
+      padding: 15px;
+      border: 1px solid var(--card-editor-border);
+      height: auto;
+      overflow: hidden;
+    }
+    .code-editor pre code {
+      white-space: pre-wrap;
+      display: block;
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* --- Links Page Styles --- */
+    .page-title {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .links-grid {
+        display: grid;
+        gap: 1.5rem;
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+    .link-card {
+        background-color: var(--code-bg-color);
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .link-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px var(--card-shadow);
+    }
+    .link-card-icon { flex-shrink: 0; }
+    .link-card-icon svg { width: 48px; height: 48px; fill: var(--text-color); }
+    .link-card-title { font-size: 1.2rem; font-weight: bold; color: var(--text-color); margin: 0 0 0.25rem; }
+    .link-card-description { font-size: 1rem; color: var(--card-desc-color); margin: 0; }
+
+    /* --- Resume Page Styles --- */
+    .resume-container {
+        width: 100%;
+        height: 80vh; /* A good default height */
+        border: 1px solid var(--card-border);
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: var(--search-bg);
+    }
+    .resume-container iframe {
+        border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="menu-overlay"></div>
+
+  <div class="slide-out-menu" id="slideOutMenu">
+    <div class="menu-header">
+      <button id="closeMenuButton" class="close-button"><svg viewBox="0 0 24 24"><line x1="2" y1="22" x2="22" y2="2" /><line x1="2" y1="2" x2="22" y2="22" /></svg></button>
+    </div>
+    <div class="menu-search-container">
+        <input type="text" id="menuSearchInput" class="input" placeholder="Search...">
+    </div>
+    <ul class="menu-items-list">
+      <li><a href="index.html" class="menu-item-link"><button class="menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Home</button></a></li>
+      <li><a href="projects.html" class="menu-item-link"><button class="menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>Projects</button></a></li>
+      <li><a href="links.html" class="menu-item-link"><button class="menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.71"></path></svg>Links</button></a></li>
+      <li><a href="resume.html" class="menu-item-link"><button class="menu-item"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Resume</button></a></li>
+    </ul>
+  </div>
+
+  <div class="page-wrapper">
+    <header>
+      <div class="header-left">
+        <label class="hamburger"><input type="checkbox" id="menuToggle"><svg viewBox="0 0 32 32"><path class="line line-top-bottom" d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"></path><path class="line" d="M7 16 27 16"></path></svg></label>
+        <a href="index.html" class="title-link"><h1>static.me</h1></a>
+      </div>
+      <div class="header-right-nav">
+        <input type="text" id="searchInput" class="input">
+        <label for="themeToggle" class="themeToggle st-sunMoonThemeToggleBtn"><input type="checkbox" id="themeToggle" class="themeToggleInput" /><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor" stroke="none"><mask id="moon-mask"><rect x="0" y="0" width="20" height="20" fill="white"></rect><circle cx="11" cy="3" r="8" fill="black"></circle></mask><circle class="sunMoon" cx="10" cy="10" r="8" mask="url(#moon-mask)"></circle><g><circle class="sunRay sunRay1" cx="18" cy="10" r="1.5"></circle><circle class="sunRay sunRay2" cx="14" cy="16.928" r="1.5"></circle><circle class="sunRay sunRay3" cx="6" cy="16.928" r="1.5"></circle><circle class="sunRay sunRay4" cx="2" cy="10" r="1.5"></circle><circle class="sunRay sunRay5" cx="6" cy="3.1718" r="1.5"></circle><circle class="sunRay sunRay6" cx="14" cy="3.1718" r="1.5"></circle></g></svg></label>
+      </div>
+    </header>
+    <main>
+      
+            <h1 class="page-title">Links</h1>
+            <div class="links-grid">
+            <a href="https://www.linkedin.com/in/dhruvmaheshwari1" target="_blank" rel="noopener noreferrer" class="link-card">
+                <div class="link-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg></div>
+                <div class="link-card-content">
+                    <span class="link-card-title">LinkedIn</span>
+                    <p class="link-card-description">Connect with me professionally and view my full work experience.</p>
+                </div>
+            </a>
+        
+
+            <a href="https://github.com/dhruvm-04" target="_blank" rel="noopener noreferrer" class="link-card">
+                <div class="link-card-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></div>
+                <div class="link-card-content">
+                    <span class="link-card-title">GitHub</span>
+                    <p class="link-card-description">Explore my repositories, open-source contributions, and coding projects.</p>
+                </div>
+            </a>
+        </div>
+        
+    </main>
+  </div>
+  
+  <footer>
+    <hr>
+    <p>Dhruv Maheshwari &copy; 2025</p>
+  </footer>
+
+  <script>
+    const menuToggle = document.getElementById('menuToggle');
+    const closeMenuButton = document.getElementById('closeMenuButton');
+    const menuOverlay = document.getElementById('menu-overlay');
+
+    function closeMenu() {
+        menuToggle.checked = false;
+        document.body.classList.remove('menu-open');
+    }
+
+    menuToggle.addEventListener('change', () => { document.body.classList.toggle('menu-open', menuToggle.checked); });
+    closeMenuButton.addEventListener('click', closeMenu);
+    menuOverlay.addEventListener('click', closeMenu);
+
+    const themeToggleInput = document.getElementById('themeToggle');
+    const htmlEl = document.documentElement;
+
+    function setTheme(theme) {
+      htmlEl.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      themeToggleInput.checked = theme === 'dark';
+    }
+
+    themeToggleInput.addEventListener('change', () => { setTheme(themeToggleInput.checked ? 'dark' : 'light'); });
+
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      setTheme(savedTheme);
+    }
+
+    function initializeSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const menuSearchInput = document.getElementById('menuSearchInput');
+        const postList = document.querySelector('main ul');
+        const projectGrid = document.querySelector('.projects-grid');
+
+        const itemsToFilter = postList ? postList.querySelectorAll('li') : projectGrid ? projectGrid.querySelectorAll('.card-link') : [];
+        const searchBars = [searchInput, menuSearchInput];
+        
+        if (!itemsToFilter.length) {
+            searchBars.forEach(bar => {
+                if(bar && bar.parentElement) {
+                    bar.parentElement.style.display = 'none';
+                }
+            });
+            return;
+        }
+        
+        function filterItems(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            searchBars.forEach(bar => { if (bar !== e.target) bar.value = e.target.value; });
+            
+            itemsToFilter.forEach(item => {
+                item.style.display = item.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+            });
+        }
+
+        searchBars.forEach(bar => {
+            if (bar) bar.addEventListener('keyup', filterItems)
+        });
+    }
+    
+    function initializeAnimatedPlaceholder() {
+        const searchInput = document.getElementById('searchInput');
+        const contentLinks = document.querySelectorAll('main ul li a, main .card-link .card-title');
+        if (!contentLinks.length || !searchInput) return;
+
+        const titles = Array.from(contentLinks).map(link => link.textContent.trim());
+        let titleIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let isPaused = false;
+
+        function type() {
+            if (isPaused || document.activeElement === searchInput) return;
+
+            const currentTitle = titles[titleIndex];
+            let displayText = currentTitle.substring(0, charIndex);
+            searchInput.placeholder = displayText + '|';
+
+            if (!isDeleting) {
+                charIndex++;
+                if (charIndex > currentTitle.length) {
+                    isDeleting = true;
+                    setTimeout(type, 2000);
+                    return;
+                }
+            } else {
+                charIndex--;
+                if (charIndex < 0) {
+                    isDeleting = false;
+                    charIndex = 0;
+                    titleIndex = (titleIndex + 1) % titles.length;
+                }
+            }
+            setTimeout(type, isDeleting ? 100 : 150);
+        }
+        
+        searchInput.addEventListener('focus', () => {
+            isPaused = true;
+            searchInput.placeholder = 'Search...';
+        });
+
+        searchInput.addEventListener('blur', () => {
+            if (searchInput.value === '') {
+                isPaused = false;
+                type();
+            }
+        });
+        
+        type();
+    }
+
+    // Initialize everything on page load
+    initializeTheme();
+    initializeSearch();
+    initializeAnimatedPlaceholder();
+  </script>
+</body>
+</html>
